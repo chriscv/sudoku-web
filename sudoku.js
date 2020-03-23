@@ -9,10 +9,14 @@ const thinPix = 2;
 let imageLoadedCount = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
-
+    
     var canvas = document.getElementById('board');
     var ctx = canvas.getContext('2d');
+    
+    //initialize board
+    drawGrid(ctx);
 
+    //load images then start
     numImages = 9;
     var imageList = []
     for (count = 1; count <= numImages; count++)
@@ -22,34 +26,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tempImg.addEventListener('load', function () {
             imageList.push(this);
-            //console.log(this);
-            //console.log(imageList[0]);
             startGame(canvas, ctx, imageList);
-            console.log(imageList)
         });
     }   
 
-    //initialize board
-    drawGrid(ctx);
-
-    //debug tools
-    coords = imageCoordinates(0,0,canvas);
-    console.log(coords[0]);
-    console.log(coords[1]);
-
-    coords = imageCoordinates(8,2,canvas);
-    console.log(coords[0]);
-    console.log(coords[1]);
-
-    //console.log("loop test");
-    //while (imageList.length != 1)
-    {
-
-    }
-    //console.log("starting");
-    //startGame(ctx,imageList);
-
-    //ctx.drawImage(imageList[0],thickPix,thickPix);
 });
 
 function startGame(canvas, ctx, imageList)
@@ -57,19 +37,41 @@ function startGame(canvas, ctx, imageList)
     imageLoadedCount++;
     if (imageLoadedCount === 9)
     {
-        ctx.drawImage(imageList[0],thickPix,thickPix);
+        //ctx.drawImage(imageList[0],thickPix,thickPix);
+        activeCell = [];
 
         //debug tool, detect click position
         canvas.addEventListener('click', function () {
+            
+            //get click coordinates relative to canvas position (centered)
             const rect = canvas.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
-            console.log("x: " + x + " y: " + y);
+            //console.log("x: " + x + " y: " + y);
 
+            //find which cell was clicked on [0,0] to [8,8]
             cell = cellSelected(x,y);
+
+            //get the coordinates of drawing into that cell
             coords = imageCoordinates(cell[0], cell[1], this);
-            console.log(coords);
-            ctx.drawImage(imageList[0],coords[0],coords[1]);
+            
+            //ctx.fillStyle = 'rgb(0, 128, 0)';
+            //ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+            //console.log(coords);
+            //ctx.drawImage(imageList[0],coords[0],coords[1]);
+
+            if (activeCell.length > 0)
+            {
+                tempCell = activeCell.pop();
+                ctx.fillStyle = 'rgb(255, 255, 255)';
+                ctx.fillRect(tempCell[0],tempCell[1],cellPix,cellPix);
+            }
+            
+            ctx.fillStyle = 'rgb(0, 128, 0)';
+            ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+            activeCell.push(coords);
+
+            //tofix: clicking on inactive regions (e.g. on a border line)
         });
 
     }
