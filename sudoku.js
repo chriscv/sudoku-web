@@ -114,6 +114,47 @@ function startGame(canvas, ctx, imageList)
             }
         }
     });
+    
+    //BUG: due to the prior hack, if you have a green cell then click
+    //neutral, then keyboard press, it will paste in top left
+    //also this won't let it de-activate a cell it's on
+    
+    //so in the callback, this is the element and event is the event?
+    //seems like event can be omitted in the function parameter list
+    //document.addEventListener('keydown', function(event) { 
+    document.addEventListener('keydown', function() {
+        
+        c = event.keyCode;
+
+        if(c >= 49 && c <= 57 && topState === cellClicked)
+        {
+            //console.log("hi");
+            //clever way: 
+            //tempImg = imageList[c-49]
+
+            if (c === 49) //1
+                tempImg = imageList[0]
+            if (c === 50) //2
+                tempImg = imageList[1]
+            if (c === 51)
+                tempImg = imageList[2]
+            if (c === 52)
+                tempImg = imageList[3]
+            if (c === 53)
+                tempImg = imageList[4]
+            if (c === 54)
+                tempImg = imageList[5]
+            if (c === 55)
+                tempImg = imageList[6]
+            if (c === 56)
+                tempImg = imageList[7]
+            if (c === 57) //9
+                tempImg = imageList[8]
+
+            ctx.drawImage(tempImg,coords[0],coords[1]);            
+            topState = waiting;
+        }
+    });
 }
 
 //get click coordinates relative to canvas position (centered)
