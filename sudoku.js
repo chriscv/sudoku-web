@@ -10,17 +10,22 @@ document.addEventListener("DOMContentLoaded", () => {
     var canvas = document.getElementById('board');
     var ctx = canvas.getContext('2d');
 
-    drawGrid(ctx);
-
     //numberImages = 5;
     tempImg = document.createElement("img");
     var t = 5;
     tempImg.src = "./images/" + t.toString() + ".png";
 
+    var imageList = []
+    //image must load before drawing
     tempImg.addEventListener('load', function () {
-        ctx.drawImage(this,thickPix,thickPix);
+        imageList.push(this);
+        //ctx.drawImage(this,thickPix,thickPix);
+        console.log(this);
+        console.log(imageList[0]);
+        startGame(ctx,imageList);
     });
 
+    //debug tool, detect click position
     canvas.addEventListener('click', function (e) {
         const rect = canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
@@ -28,10 +33,29 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("x: " + x + " y: " + y);
     });
 
+    //initialize board
+    drawGrid(ctx);
+
+    //debug tools
     coords = imageCoordinates(0,0,canvas);
     console.log(coords[0]);
     console.log(coords[1]);
+
+    coords = imageCoordinates(8,2,canvas);
+    console.log(coords[0]);
+    console.log(coords[1]);
+
+    //while (imageList.length != 1)
+    {
+
+    }
+    //ctx.drawImage(imageList[0],thickPix,thickPix);
 });
+
+function startGame(ctx,imageList)
+{
+    ctx.drawImage(imageList[0],thickPix,thickPix);
+}
 
 function drawGrid(ctx)
 {
@@ -94,14 +118,6 @@ function imageCoordinates(row, col, canvas)
                     3*d+7*c+5*b,
                     3*d+8*c+6*b
                 ];
-
-    rawPosition = [ pixelList[row], pixelList[col] ];
     
-    //need offset for board position?
-    //... don't actually need it, since drawImage accepts canvas coordinates
-    const rect = canvas.getBoundingClientRect();
-    offset = [ rect.left, rect.top ];
-    adjustedPosX = rawPosition[0] + offset[0];
-    adjustedPosY = rawPosition[1] + offset[1];
-    return [adjustedPosX, adjustedPosY];
+    return [ pixelList[row], pixelList[col] ];
 }
