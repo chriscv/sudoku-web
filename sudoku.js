@@ -47,78 +47,115 @@ function checkLoaded(canvas, ctx, imageList, imageCounter)
 
 function startGame(canvas, ctx, imageList)
 {
+    //topState
     waiting = 1;
     cellClicked = 2;
+    
+    //clickType
+    neutralClick = 3;
+    activeCellClick = 4;
+    outsideClick = 5;
+    console.log("neutral 3, active 4, outside 5");
 
     topState = waiting;
     activeCell = [];
 
     window.addEventListener('click', function() {
-            
-        //determine which cell was clicked on [0,0] to [8,8]
-        cell = cellSelected(this, canvas);
-
-        //get the coordinates for drawing into that cell
-        coords = imageCoordinates(cell[0], cell[1], this);
         
-        //the logic in here should probably use cell[0], cell[1] 
-        //instead of coords[0], coords[1] for clarity
+        //get canvas coordinates, if outside canvas return [-1,-1]
+        clickCoords = getClickCoordinates(window, canvas)
+        console.log(clickCoords);
+        
+        //click outside canvas
+        if (clickCoords[0] === -1)
+            clickType = outsideClick;
+
+        //click inside canvas
+        else if (clickCoords[0] != -1)
+        {
+            //determine which cell was clicked on [0,0] to [8,8]
+            cell = cellSelected(clickCoords[0], clickCoords[1]);
+
+            //click wasn't in cell regions
+            if (cell[0] === -1)
+                clickType = neutralClick;
+            else
+                clickType = activeCellClick;
+        }
+        
+        console.log(clickType);
         if (topState === waiting)
         {
-            //check for valid cell click
-            if (coords[0] != -1 && coords[1] != -1)
+            if (clickType === activeCellClick)
             {
-                topState = cellClicked;
-                activeCell = coords;
-                
-                //fill the clicked cell with green
+                //light new cell
                 ctx.fillStyle = 'rgb(0, 128, 0)';
+                coords = imageCoordinates(cell[0], cell[1], this);
                 ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+
+                activeCell = [ cell[0], cell[1] ];
+                topState = cellClicked;
+            }
+            else if (clickType === neutralClick)
+            {
+                //do nothing
+                topState = waiting;
+            }
+            else if (clickType === outsideClick)
+            {
+                //do nothing
+                topState = waiting;
             }
         }
         else if (topState === cellClicked)
         {
-            //check for out-click 
-            if ( coords[0] === -2)
+            if (clickType === activeCellClick)
             {
-                topState = waiting;
-                //fill the active cell with white (turn it off)
-                ctx.fillStyle = 'rgb(255, 255, 255)';
-                ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
-            }
+                //case same cell click
+                if (cell[0] === activeCell[0] && cell[1] === activeCell[1])
+                {
+                    ctx.fillStyle = 'rgb(255, 255, 255)';
+                    coords = imageCoordinates(cell[0], cell[1], this);
+                    ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+                    
+                    activeCell = [];
+                    topState = waiting;
+                }
 
-            //check for re-click of an active cell
-            else if ( coords[0] === activeCell[0] 
-                    && coords[1] === activeCell[1] )
-            {
-                topState = waiting;
-                //fill the clicked cell with white (turn it off)
-                ctx.fillStyle = 'rgb(255, 255, 255)';
-                ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+                //case new cell click
+                else
+                {
+                    ctx.fillStyle = 'rgb(255, 255, 255)';
+                    coords = imageCoordinates(activeCell[0], activeCell[1], this);
+                    ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+
+                    ctx.fillStyle = 'rgb(0, 128, 0)';
+                    coords = imageCoordinates(cell[0], cell[1], this);
+                    ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+
+                    activeCell = [ cell[0], cell[1] ];
+                    topState = cellClicked;
+                }
+                
             }
-            
-            //check for new valid cell click
-            else if (coords[0] != -1 && coords[1] != -1)
+            else if (clickType === neutralClick)
             {
+                //do nothing
                 topState = cellClicked;
-                
-                //fill the old cell with white (turn it off)
+            }
+            else if (clickType === outsideClick)
+            {
+                //unlight active cell
                 ctx.fillStyle = 'rgb(255, 255, 255)';
-                ctx.fillRect(activeCell[0],activeCell[1],cellPix,cellPix);
-
-                activeCell = coords;
-                
-                //fill the clicked cell with green (turn it on)
-                ctx.fillStyle = 'rgb(0, 128, 0)';
+                coords = imageCoordinates(activeCell[0], activeCell[1], this);
                 ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+
+                activeCell = [];
+                topState = waiting;
             }
         }
     });
-    
-    //BUG: due to the prior hack, if you have a green cell then click
-    //neutral, then keyboard press, it will paste in top left
-    //also this won't let it de-activate a cell it's on
-    
+
     //so in the callback, this is the element and event is the event?
     //seems like event can be omitted in the function parameter list
     //document.addEventListener('keydown', function(event) { 
@@ -126,32 +163,35 @@ function startGame(canvas, ctx, imageList)
         
         c = event.keyCode;
 
-        if(c >= 49 && c <= 57 && topState === cellClicked)
+        if( (( c >= 49 && c <= 57 ) || ( c >= 97 && c <= 105 ))
+            && topState === cellClicked)
         {
-            //console.log("hi");
+            console.log(coords[0]);
+            console.log(coords[1]);
+            
             //clever way: 
             //tempImg = imageList[c-49]
-
-            if (c === 49) //1
+            if (c === 49 || c === 97) //1, one code is for numpad
                 tempImg = imageList[0]
-            if (c === 50) //2
+            if (c === 50 || c === 98) //2
                 tempImg = imageList[1]
-            if (c === 51)
+            if (c === 51 || c === 99)
                 tempImg = imageList[2]
-            if (c === 52)
+            if (c === 52 || c === 100)
                 tempImg = imageList[3]
-            if (c === 53)
+            if (c === 53 || c === 101)
                 tempImg = imageList[4]
-            if (c === 54)
+            if (c === 54 || c === 102)
                 tempImg = imageList[5]
-            if (c === 55)
+            if (c === 55 || c === 103)
                 tempImg = imageList[6]
-            if (c === 56)
+            if (c === 56 || c === 104)
                 tempImg = imageList[7]
-            if (c === 57) //9
+            if (c === 57 || c === 105) //9
                 tempImg = imageList[8]
 
-            ctx.drawImage(tempImg,coords[0],coords[1]);            
+            if (coords[0] >= 0)
+                ctx.drawImage(tempImg,coords[0],coords[1]);            
             topState = waiting;
         }
     });
@@ -166,11 +206,11 @@ function getClickCoordinates(window, canvas)
     //check if the click was not in the canvas
     if (event.clientX < rect.left || event.clientX >= rect.right)
     {
-        return [-2,-2];
+        return [-1,-1];
     }
     else if (event.clientY < rect.top || event.clientY >= rect.bottom)
     {
-        return [-2,-2];
+        return [-1,-1];
     }
     //this click was in the canvas, get the canvas coordinates
     else
@@ -252,19 +292,8 @@ function imageCoordinates(row, col, canvas)
 //accept mouse coordinates of the click
 //returns the cell of interest [0,0] to [8,8]
 //function cellSelected(x,y)
-function cellSelected(window, canvas)
+function cellSelected(x, y)
 {
-    //get click coordinates relative to canvas position (centered)
-    clickCoords = getClickCoordinates(window, canvas)
-    x = clickCoords[0];
-    y = clickCoords[1];
-
-    //the click was not in the canvas
-    if (x === -2)
-    {
-        return [-2,-2]
-    }
-
     cellX = findCell(x);
     cellY = findCell(y);
     return [cellX, cellY]
