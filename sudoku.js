@@ -1,37 +1,33 @@
 //[[8, 28, 6], [8, 30, 3], [5, 32, 2], [2, 34, 1]]
 //solutions using thick, cell, thin
+//requires a set of images that match the cellPix dimensions (square)
+//1.png, 2.png, ..., 9.png
 
 const thickPix = 5;
 const cellPix = 32;
 const thinPix = 2;
+let imageLoadedCount = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
 
     var canvas = document.getElementById('board');
     var ctx = canvas.getContext('2d');
 
-    //numberImages = 5;
-    tempImg = document.createElement("img");
-    var t = 5;
-    tempImg.src = "./images/" + t.toString() + ".png";
-
+    numImages = 9;
     var imageList = []
-    //image must load before drawing
-    tempImg.addEventListener('load', function () {
-        imageList.push(this);
-        //ctx.drawImage(this,thickPix,thickPix);
-        console.log(this);
-        console.log(imageList[0]);
-        startGame(ctx,imageList);
-    });
+    for (count = 1; count <= numImages; count++)
+    {
+        tempImg = document.createElement("img");
+        tempImg.src = "./images/" + count.toString() + ".png";
 
-    //debug tool, detect click position
-    canvas.addEventListener('click', function (e) {
-        const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        console.log("x: " + x + " y: " + y);
-    });
+        tempImg.addEventListener('load', function () {
+            imageList.push(this);
+            //console.log(this);
+            //console.log(imageList[0]);
+            startGame(canvas, ctx, imageList);
+            console.log(imageList)
+        });
+    }   
 
     //initialize board
     drawGrid(ctx);
@@ -45,16 +41,38 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log(coords[0]);
     console.log(coords[1]);
 
+    //console.log("loop test");
     //while (imageList.length != 1)
     {
 
     }
+    //console.log("starting");
+    //startGame(ctx,imageList);
+
     //ctx.drawImage(imageList[0],thickPix,thickPix);
 });
 
-function startGame(ctx,imageList)
+function startGame(canvas, ctx, imageList)
 {
-    ctx.drawImage(imageList[0],thickPix,thickPix);
+    imageLoadedCount++;
+    if (imageLoadedCount === 9)
+    {
+        ctx.drawImage(imageList[0],thickPix,thickPix);
+
+        //debug tool, detect click position
+        canvas.addEventListener('click', function () {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            console.log("x: " + x + " y: " + y);
+
+            cell = cellSelected(x,y);
+            coords = imageCoordinates(cell[0], cell[1], this);
+            console.log(coords);
+            ctx.drawImage(imageList[0],coords[0],coords[1]);
+        });
+
+    }
 }
 
 function drawGrid(ctx)
@@ -120,4 +138,45 @@ function imageCoordinates(row, col, canvas)
                 ];
     
     return [ pixelList[row], pixelList[col] ];
+}
+
+//accept mouse coordinates
+//returns the cell of interest [0,0] to [8,8]
+function cellSelected(x,y)
+{
+    cellX = findCell(x);
+    cellY = findCell(y);
+
+    console.log(cellX);
+    console.log(cellY);
+
+    return [cellX, cellY]
+}
+
+function findCell(x)
+{
+    d = thickPix;
+    c = cellPix;
+    b = thinPix;
+
+    if ( x >= d           && x < d+c       )
+        return 0;
+    if ( x >= d+c+b       && x < d+2*c+b   )
+        return 1;
+    if ( x >= d+2*c+2*b   && x < d+3*c+2*b)
+        return 2;
+
+    if ( x >= 2*d+3*c+2*b && x < 2*d+4*c+2*b)
+        return 3;
+    if ( x >= 2*d+4*c+3*b && x < 2*d+5*c+3*b)
+        return 4;
+    if ( x >= 2*d+5*c+4*b && x < 2*d+6*c+4*b)
+        return 5;
+
+    if ( x >= 3*d+6*c+4*b && x < 3*d+7*c+4*b)
+        return 6;
+    if ( x >= 3*d+7*c+5*b && x < 3*d+8*c+5*b)
+        return 7;
+    if ( x >= 3*d+8*c+6*b && x < 3*d+9*c+6*b)
+        return 8;
 }
