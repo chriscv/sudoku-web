@@ -6,12 +6,13 @@
 const thickPix = 5;
 const cellPix = 32;
 const thinPix = 2;
-let imageLoadedCount = 0;
+//let imageLoadedCount = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
     
     var canvas = document.getElementById('board');
     var ctx = canvas.getContext('2d');
+    var imageCounter = 0;
     
     //initialize board
     drawGrid(ctx);
@@ -26,19 +27,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tempImg.addEventListener('load', function () {
             imageList.push(this);
-            checkLoaded(canvas, ctx, imageList);
+            //checkLoaded(canvas, ctx, imageList);
+            imageCounter += checkLoaded(canvas, ctx, imageList, imageCounter);
         });
     }   
 
 });
 
-function checkLoaded(canvas, ctx, imageList)
+//function checkLoaded(canvas, ctx, imageList)
+function checkLoaded(canvas, ctx, imageList, imageCounter)
 {
-    imageLoadedCount++;
-    if (imageLoadedCount === 9)
-    {
+    //imageLoadedCount++;
+    //if (imageLoadedCount === 9)
+    if (imageCounter === 8)
         startGame(canvas, ctx, imageList);
-    }
+    
+    return 1;
 }
 
 function startGame(canvas, ctx, imageList)
