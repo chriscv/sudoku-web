@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     var canvas = document.getElementById('board');
     var ctx = canvas.getContext('2d');
+    //comment line for git test
 
     drawGrid(ctx, thickPix, cellPix, thinPix);
     numberImages = 
