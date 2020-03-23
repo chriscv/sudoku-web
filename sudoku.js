@@ -26,54 +26,113 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tempImg.addEventListener('load', function () {
             imageList.push(this);
-            startGame(canvas, ctx, imageList);
+            checkLoaded(canvas, ctx, imageList);
         });
     }   
 
 });
 
-function startGame(canvas, ctx, imageList)
+function checkLoaded(canvas, ctx, imageList)
 {
     imageLoadedCount++;
     if (imageLoadedCount === 9)
     {
-        //ctx.drawImage(imageList[0],thickPix,thickPix);
-        activeCell = [];
+        startGame(canvas, ctx, imageList);
+    }
+}
 
-        //debug tool, detect click position
-        canvas.addEventListener('click', function () {
+function startGame(canvas, ctx, imageList)
+{
+    waiting = 1;
+    cellClicked = 2;
+
+    topState = waiting;
+    activeCell = [];
+
+    window.addEventListener('click', function() {
             
-            //get click coordinates relative to canvas position (centered)
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            //console.log("x: " + x + " y: " + y);
+        //determine which cell was clicked on [0,0] to [8,8]
+        cell = cellSelected(this, canvas);
 
-            //find which cell was clicked on [0,0] to [8,8]
-            cell = cellSelected(x,y);
-
-            //get the coordinates of drawing into that cell
-            coords = imageCoordinates(cell[0], cell[1], this);
-            
-            //ctx.fillStyle = 'rgb(0, 128, 0)';
-            //ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
-            //console.log(coords);
-            //ctx.drawImage(imageList[0],coords[0],coords[1]);
-
-            if (activeCell.length > 0)
+        //get the coordinates for drawing into that cell
+        coords = imageCoordinates(cell[0], cell[1], this);
+        
+        //the logic in here should probably use cell[0], cell[1] 
+        //instead of coords[0], coords[1] for clarity
+        if (topState === waiting)
+        {
+            //check for valid cell click
+            if (coords[0] != -1 && coords[1] != -1)
             {
-                tempCell = activeCell.pop();
+                topState = cellClicked;
+                activeCell = coords;
+                
+                //fill the clicked cell with green
+                ctx.fillStyle = 'rgb(0, 128, 0)';
+                ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+            }
+        }
+        else if (topState === cellClicked)
+        {
+            //check for out-click 
+            if ( coords[0] === -2)
+            {
+                topState = waiting;
+                //fill the active cell with white (turn it off)
                 ctx.fillStyle = 'rgb(255, 255, 255)';
-                ctx.fillRect(tempCell[0],tempCell[1],cellPix,cellPix);
+                ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+            }
+
+            //check for re-click of an active cell
+            else if ( coords[0] === activeCell[0] 
+                    && coords[1] === activeCell[1] )
+            {
+                topState = waiting;
+                //fill the clicked cell with white (turn it off)
+                ctx.fillStyle = 'rgb(255, 255, 255)';
+                ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
             }
             
-            ctx.fillStyle = 'rgb(0, 128, 0)';
-            ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
-            activeCell.push(coords);
+            //check for new valid cell click
+            else if (coords[0] != -1 && coords[1] != -1)
+            {
+                topState = cellClicked;
+                
+                //fill the old cell with white (turn it off)
+                ctx.fillStyle = 'rgb(255, 255, 255)';
+                ctx.fillRect(activeCell[0],activeCell[1],cellPix,cellPix);
 
-            //tofix: clicking on inactive regions (e.g. on a border line)
-        });
+                activeCell = coords;
+                
+                //fill the clicked cell with green (turn it on)
+                ctx.fillStyle = 'rgb(0, 128, 0)';
+                ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+            }
+        }
+    });
+}
 
+//get click coordinates relative to canvas position (centered)
+//called inside the callback function for the click event
+function getClickCoordinates(window, canvas)
+{
+    const rect = canvas.getBoundingClientRect();
+    
+    //check if the click was not in the canvas
+    if (event.clientX < rect.left || event.clientX >= rect.right)
+    {
+        return [-2,-2];
+    }
+    else if (event.clientY < rect.top || event.clientY >= rect.bottom)
+    {
+        return [-2,-2];
+    }
+    //this click was in the canvas, get the canvas coordinates
+    else
+    {
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        return [x,y];
     }
 }
 
@@ -122,6 +181,9 @@ function drawGrid(ctx)
 //returns the pixel position to output the image
 function imageCoordinates(row, col, canvas)
 {
+    if (row === -1 || col === -1)
+        return [-1,-1]
+
     d = thickPix;
     c = cellPix;
     b = thinPix;
@@ -142,16 +204,24 @@ function imageCoordinates(row, col, canvas)
     return [ pixelList[row], pixelList[col] ];
 }
 
-//accept mouse coordinates
+//accept mouse coordinates of the click
 //returns the cell of interest [0,0] to [8,8]
-function cellSelected(x,y)
+//function cellSelected(x,y)
+function cellSelected(window, canvas)
 {
+    //get click coordinates relative to canvas position (centered)
+    clickCoords = getClickCoordinates(window, canvas)
+    x = clickCoords[0];
+    y = clickCoords[1];
+
+    //the click was not in the canvas
+    if (x === -2)
+    {
+        return [-2,-2]
+    }
+
     cellX = findCell(x);
     cellY = findCell(y);
-
-    console.log(cellX);
-    console.log(cellY);
-
     return [cellX, cellY]
 }
 
@@ -181,4 +251,7 @@ function findCell(x)
         return 7;
     if ( x >= 3*d+8*c+6*b && x < 3*d+9*c+6*b)
         return 8;
+
+    //clicked on a neutral portion
+    return -1;
 }
