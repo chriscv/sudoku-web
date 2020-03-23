@@ -1,42 +1,39 @@
 //[[8, 28, 6], [8, 30, 3], [5, 32, 2], [2, 34, 1]]
 //solutions using thick, cell, thin
 
-document.addEventListener("DOMContentLoaded", () => {
+const thickPix = 5;
+const cellPix = 32;
+const thinPix = 2;
 
-    let thickPix = 5;
-    let cellPix = 32;
-    let thinPix = 2;
+document.addEventListener("DOMContentLoaded", () => {
 
     var canvas = document.getElementById('board');
     var ctx = canvas.getContext('2d');
-    //comment line for git test
 
-    drawGrid(ctx, thickPix, cellPix, thinPix);
-    numberImages = 
+    drawGrid(ctx);
+
+    //numberImages = 5;
     tempImg = document.createElement("img");
-    
-    //tempImg.src = "5.png";
     var t = 5;
-    tempImg.src = t.toString() + ".png";
+    tempImg.src = "./images/" + t.toString() + ".png";
 
     tempImg.addEventListener('load', function () {
         ctx.drawImage(this,thickPix,thickPix);
     });
 
-    //canvas.addEventListener('click', function (e) {
-    //document.addEventListener('click', function (e) {
-    //window.addEventListener('click', function (e) {
     canvas.addEventListener('click', function (e) {
-        //console.log(e.clientX);
-        //console.log(5);
-        const rect = canvas.getBoundingClientRect()
-        const x = event.clientX - rect.left
-        const y = event.clientY - rect.top
-        console.log("x: " + x + " y: " + y)
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        console.log("x: " + x + " y: " + y);
     });
+
+    coords = imageCoordinates(0,0,canvas);
+    console.log(coords[0]);
+    console.log(coords[1]);
 });
 
-function drawGrid(ctx, thickPix, cellPix, thinPix)
+function drawGrid(ctx)
 {
     ctx.fillStyle = 'rgb(0, 0, 0)';
 
@@ -75,4 +72,36 @@ function drawGrid(ctx, thickPix, cellPix, thinPix)
     
     ctx.fillRect(0,3*thickPix+7*cellPix+4*thinPix, 320, thinPix); 
     ctx.fillRect(0,3*thickPix+8*cellPix+5*thinPix, 320, thinPix); 
+}
+
+//accept the cell of interest [0,0] to [8,8]
+//returns the pixel position to output the image
+function imageCoordinates(row, col, canvas)
+{
+    d = thickPix;
+    c = cellPix;
+    b = thinPix;
+    
+    //board is symmetric so decoding x and y is the same process
+    pixelList = [   
+                    d,
+                    d+c+b,
+                    d+2*c+2*b,
+                    2*d+3*c+2*b,
+                    2*d+4*c+3*b,
+                    2*d+5*c+4*b,
+                    3*d+6*c+4*b,
+                    3*d+7*c+5*b,
+                    3*d+8*c+6*b
+                ];
+
+    rawPosition = [ pixelList[row], pixelList[col] ];
+    
+    //need offset for board position?
+    //... don't actually need it, since drawImage accepts canvas coordinates
+    const rect = canvas.getBoundingClientRect();
+    offset = [ rect.left, rect.top ];
+    adjustedPosX = rawPosition[0] + offset[0];
+    adjustedPosY = rawPosition[1] + offset[1];
+    return [adjustedPosX, adjustedPosY];
 }
