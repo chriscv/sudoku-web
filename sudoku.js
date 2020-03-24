@@ -27,133 +27,146 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tempImg.addEventListener('load', function () {
             imageList.push(this);
-            //checkLoaded(canvas, ctx, imageList);
-            imageCounter += checkLoaded(canvas, ctx, imageList, imageCounter);
+            imageCounter++;
+            console.log(imageCounter);
+            if(imageCounter === 9)
+              startGame(canvas, ctx, imageList);
         });
     }   
 
 });
-
-//function checkLoaded(canvas, ctx, imageList)
-function checkLoaded(canvas, ctx, imageList, imageCounter)
-{
-    //imageLoadedCount++;
-    //if (imageLoadedCount === 9)
-    if (imageCounter === 8)
-        startGame(canvas, ctx, imageList);
-    
-    return 1;
-}
 
 function startGame(canvas, ctx, imageList)
 {
     //topState
     waiting = 1;
     cellClicked = 2;
-    
+    topState = waiting;
+
     //clickType
     neutralClick = 3;
-    activeCellClick = 4;
+    cellClick = 4;
     outsideClick = 5;
+    canvasClick = 6;
     console.log("neutral 3, active 4, outside 5");
 
-    topState = waiting;
-    activeCell = [];
+    //cell memory
+    prevCell = [];
+    currCell = [];
+
+    //board memory -- FIX: update this in the state machine
+    //TODO: initialize board with initial position
+    board = [ [],[],[],
+              [],[],[],
+              [],[],[] ];
+    for (i = 0; i < 9; i++)
+    {
+        for (j = 0; j < 9; j++)
+        {
+            board[i][j] = 0;
+        }
+    }
+    console.log(board);
+    
 
     window.addEventListener('click', function() {
         
+        //get input***
+        //
         //get canvas coordinates, if outside canvas return [-1,-1]
-        clickCoords = getClickCoordinates(window, canvas)
+        clickCoords = getClickCoordinates(window, canvas);  
         console.log(clickCoords);
         
-        //click outside canvas
-        if (clickCoords[0] === -1)
-            clickType = outsideClick;
+        //filter input***
+        //
+        //new code
+        
+        //canvasClick or outsideClick
+        clickType = getClickType(clickCoords[0],clickCoords[1]);
 
-        //click inside canvas
-        else if (clickCoords[0] != -1)
+        if (clickType === canvasClick)
         {
             //determine which cell was clicked on [0,0] to [8,8]
-            cell = cellSelected(clickCoords[0], clickCoords[1]);
-
-            //click wasn't in cell regions
-            if (cell[0] === -1)
+            //return [-1,y] or [x,-1] if neutral region
+            currCell = cellSelected(clickCoords[0],clickCoords[1]);
+            if (currCell[0] === -1 || currCell[1] === -1)
                 clickType = neutralClick;
             else
-                clickType = activeCellClick;
+            {
+                clickType = cellClick;
+                coords =  imageCoordinates(currCell[0], currCell[1]);
+            }
         }
         
-        console.log(clickType);
-        if (topState === waiting)
+        //advance game state
+        //state machine
+        //
+        //new code
+        if (topState === waiting && clickType === cellClick)
         {
-            if (clickType === activeCellClick)
-            {
-                //light new cell
-                ctx.fillStyle = 'rgb(0, 128, 0)';
-                coords = imageCoordinates(cell[0], cell[1], this);
-                ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
-
-                activeCell = [ cell[0], cell[1] ];
-                topState = cellClicked;
-            }
-            else if (clickType === neutralClick)
-            {
-                //do nothing
-                topState = waiting;
-            }
-            else if (clickType === outsideClick)
-            {
-                //do nothing
-                topState = waiting;
-            }
+            //turn currCell ON
+            coords = imageCoordinates(currCell[0], currCell[1]);
+            ctx.fillStyle = 'rgb(0, 128, 0)';
+            ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+            
+            topState = cellClicked;
+            prevCell[0] = currCell[0];
+            prevCell[1] = currCell[1];
         }
         else if (topState === cellClicked)
         {
-            if (clickType === activeCellClick)
+            if (clickType === outsideClick)
             {
-                //case same cell click
-                if (cell[0] === activeCell[0] && cell[1] === activeCell[1])
+                //turn prevCell OFF
+                coords = imageCoordinates(prevCell[0], prevCell[1]);
+                ctx.fillStyle = 'rgb(255, 255, 255)';
+                ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+
+                topState = waiting;
+                //flush cell memory
+                prevCell = [];
+            }
+            else if (clickType === cellClick)
+            {
+                //case 1: prevCell === currCell
+                if (prevCell[0] === currCell[0] && prevCell[1] === currCell[1])
                 {
+                    //turn prevCell OFF
+                    coords = imageCoordinates(prevCell[0], prevCell[1]);
                     ctx.fillStyle = 'rgb(255, 255, 255)';
-                    coords = imageCoordinates(cell[0], cell[1], this);
                     ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
                     
-                    activeCell = [];
                     topState = waiting;
+                    //flush cell memory
+                    prevCell = [];
+                    
                 }
-
-                //case new cell click
+                
+                //case 2: prevCell != currCell
                 else
                 {
+                    //turn prevCell OFF
+                    coords = imageCoordinates(prevCell[0], prevCell[1]);
                     ctx.fillStyle = 'rgb(255, 255, 255)';
-                    coords = imageCoordinates(activeCell[0], activeCell[1], this);
                     ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
 
+                    //turn currCell ON
                     ctx.fillStyle = 'rgb(0, 128, 0)';
-                    coords = imageCoordinates(cell[0], cell[1], this);
+                    coords = imageCoordinates(currCell[0], currCell[1]);
                     ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
 
-                    activeCell = [ cell[0], cell[1] ];
                     topState = cellClicked;
+                    prevCell[0] = currCell[0];
+                    prevCell[1] = currCell[1];
                 }
                 
             }
             else if (clickType === neutralClick)
             {
-                //do nothing
-                topState = cellClicked;
-            }
-            else if (clickType === outsideClick)
-            {
-                //unlight active cell
-                ctx.fillStyle = 'rgb(255, 255, 255)';
-                coords = imageCoordinates(activeCell[0], activeCell[1], this);
-                ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
-
-                activeCell = [];
-                topState = waiting;
+                //do nothing?
             }
         }
+
     });
 
     //so in the callback, this is the element and event is the event?
@@ -197,6 +210,31 @@ function startGame(canvas, ctx, imageList)
     });
 }
 
+function getClickType(x,y)
+{
+    //clickType
+    /*
+    neutralClick = 3;
+    cellClick = 4;
+    outsideClick = 5;
+    canvasClick = 6;
+    
+    */
+    if (x === -1 || y === -1)
+        return 5; //outsideClick
+    else
+        return 6; //canvasClick
+
+    /*
+    tempCell = cellSelected(x,y);
+    if (tempCell[0] === -1 || tempCell[1] === -1)
+        return 3; //neutralClick
+    else
+        return 4; //cellClick
+    */
+
+
+}
 //get click coordinates relative to canvas position (centered)
 //called inside the callback function for the click event
 function getClickCoordinates(window, canvas)
@@ -264,7 +302,7 @@ function drawGrid(ctx)
 
 //accept the cell of interest [0,0] to [8,8]
 //returns the pixel position to output the image
-function imageCoordinates(row, col, canvas)
+function imageCoordinates(row, col)
 {
     if (row === -1 || col === -1)
         return [-1,-1]
