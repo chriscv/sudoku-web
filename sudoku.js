@@ -298,6 +298,7 @@ function startGame(canvas, ctx, imageList)
                     {                    
                         topState = win;
                         console.log("winner");
+                        document.querySelector("body").append("win");
                     }
                 }
                 
