@@ -3,6 +3,7 @@
 //the code that determines the clicked cell can check against this list
 
 import * as Module from './modules/module.js';
+import * as InitBoard from './modules/initBoard.js'
 
 const thickPix = 5;
 const cellPix = 32;
@@ -46,7 +47,10 @@ function startGame(canvas, ctx, imageList)
     //topState
     let waiting = 1;
     let cellClicked = 2;
+    let win = 7;
+
     let topState = waiting;
+
 
     //clickType
     let neutralClick = 3;
@@ -64,13 +68,26 @@ function startGame(canvas, ctx, imageList)
     
     //board memory -- FIX: update this in the state machine
     //TODO: initialize board with initial position (e.g. a sudoku puzzle)
-    var val;
+    /*
     let board = [ [],[],[],
                   [],[],[],
                   [],[],[] ];
     for (let i = 0; i < 9; i++)
         for (let j = 0; j < 9; j++)
             board[i][j] = 0;
+    */
+    
+    //fix this to have a click checker and a value holder
+    //winchecks are run against the value holder
+    //the logic to handle clicks will work on the click checker
+    //var board = InitBoard.createBoard(ctx, imageList);
+
+    //new code
+    var boardList = InitBoard.createBoard(ctx, imageList);
+    //maintain old name bindings with board instead of clickBoard
+    var board = boardList[0]; 
+    var valBoard = boardList[1]; //FIX: update on keypress
+    var val;
     console.log(board);
     
     window.addEventListener('click', function(event) {
@@ -86,7 +103,7 @@ function startGame(canvas, ctx, imageList)
         {
             //determine which cell was clicked on [0,0] to [8,8]
             //return [-1,y] or [x,-1] if neutral region
-            currCell = Module.cellSelected(clickCoords[0],clickCoords[1]);
+            currCell = Module.cellSelected(clickCoords[0],clickCoords[1],board);
             if (currCell[0] === -1 || currCell[1] === -1)
                 clickType = neutralClick;
             else
@@ -236,23 +253,52 @@ function startGame(canvas, ctx, imageList)
         
         let c = event.keyCode;
         let tempImg = null;
-        var entry = Module.getKeyEntry(c,topState);
 
-        //entry is -1 if we aren't in the state to accept keypress
-        //or is the keypress wasn't in the valid range of 1 to 9
-        if (entry != -1)
+        if (topState == cellClicked)
         {
-            
-            tempImg = imageList[entry-1];
+            var entry = Module.getKeyEntry(c);
+        
+            //entry is -1 if the keypress wasn't in the valid range of 1 to 9
+            if (entry != -1)
+            {
+                if (entry === 0)
+                {
+                    //white-out the cell
+                    ctx.fillStyle = 'rgb(255, 255, 255)';
+                    ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+                    
+                    topState = waiting;
+                    board[currCell[1]][currCell[0]] = entry;
+                    valBoard[currCell[1]][currCell[0]] = entry;
+                }
+                else
+                {
+                    tempImg = imageList[entry-1];
 
-            //white-out the cell
-            ctx.fillStyle = 'rgb(255, 255, 255)';
-            ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
-            //draw image
-            ctx.drawImage(tempImg,coords[0],coords[1]);            
-            
-            topState = waiting;
-            board[currCell[1]][currCell[0]] = entry;
+                    //white-out the cell
+                    ctx.fillStyle = 'rgb(255, 255, 255)';
+                    ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+                    //draw image
+                    ctx.drawImage(tempImg,coords[0],coords[1]);            
+                    
+                    topState = waiting;
+                    board[currCell[1]][currCell[0]] = entry;
+                    valBoard[currCell[1]][currCell[0]] = entry;
+                    console.log(valBoard);
+    
+                    console.log("about to check");
+                    let win = Module.checkWin(valBoard);
+                    //console.log("win is: " + win);
+                    if(win)
+                    {                    
+                        topState = win;
+                        console.log("winner");
+                    }
+                }
+                
+            }
+
         }
+        
     });
 }

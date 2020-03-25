@@ -2,13 +2,191 @@ const thickPix = 5;
 const cellPix = 32;
 const thinPix = 2;
 
-function getKeyEntry(c, topState)
+function checkWin(board)
+{
+    //FIX: case where we still have 0s in the board
+    for (var i = 0; i < 9; i++)
+    {
+        for (var j = 0; j < 9; j++)
+        {
+            if (board[i][j] === 0)
+            {
+                    console.log("failed zero");
+                    return false;
+            }
+        }
+    }
+
+    console.log("checking");
+    var tempBoard = copyThis(board);
+    console.log(tempBoard);
+    //check rows***
+    for (var i = 0; i < 9; i++)
+    {
+        var row = tempBoard[i];
+        row = row.sort();
+        for (var k = 0; k < 8; k++)
+        {
+            if (row[k+1] != row[k]+1)
+            {
+                    console.log("failed rows");
+                    return false;
+            }
+        }
+    }
+    
+    //check columns***
+    //build up columns into rows, then re-use the code
+    var columnBoard = [];
+    var tempBoard = copyThis(board);
+    for (var i = 0; i < 9; i++)
+    {
+        var column = [];
+
+        for (var j = 0; j < 9; j++)
+        {
+            column.push(tempBoard[j][i]);    
+        }
+        console.log(column);
+        columnBoard.push(column);
+    }
+    console.log(column.board);
+    //re-use row tester on columnBoard
+    //check rows
+    for (var i = 0; i < 9; i++)
+    {
+        var row = columnBoard[i];
+        row = row.sort();
+        for (var k = 0; k < 8; k++)
+        {
+            if (row[k+1] != row[k]+1)
+            {
+                console.log("failed columns");
+                return false;
+            }
+                
+        }
+    }
+
+    //box checker***
+    //build up boxes into rows, then re-use the code
+    //box1, i [0,2] j [0,2]
+    //box2, i [0,2] j [3,5]
+    //box3, i [0,2] j [6,8]
+    
+    //box4, i [3,5] j [0,2]
+    //box5, i [3,5] j [3,5]
+    //box6, i [3,5] j [6,8]
+    
+    //box7, i [6,8] j [6,8]
+    //box8, i [6,8] j [3,5]
+    //box9, i [6,8] j [0,2]
+    let box1 = [];
+    let box2 = [];
+    let box3 = [];
+    let box4 = [];
+    let box5 = [];
+    let box6 = [];
+    let box7 = [];
+    let box8 = [];
+    let box9 = [];
+    var tempBoard = copyThis(board);
+    for (var i = 0; i < 9; i++) //i is the row depth
+    {
+        for (var j = 0; j < 9; j++) //j is the column depth
+        {
+            var val = tempBoard[i][j];
+
+            if (i < 2)
+            {
+                if (j < 3) //box1
+                    box1.push(val);
+                else if (j < 6)
+                    box2.push(val);
+                else
+                    box3.push(val);
+            }
+            else if (i < 6)
+            {
+                if (j < 3)
+                    box4.push(val);
+                else if (j < 6)
+                    box5.push(val);
+                else
+                    box6.push(val);
+            }
+            else
+            {
+                if (j < 3)
+                    box7.push(val);
+                else if (j < 6)
+                    box8.push(val);
+                else
+                    box9.push(val);
+            }
+            
+        }
+    }
+    let boxBoard = [ 
+                     box1,
+                     box2,
+                     box3,
+                     box4,
+                     box5,
+                     box6,
+                     box7,
+                     box8,
+                     box9
+                   ];
+    console.log(boxBoard);
+    //re-use row tester on boxBoard
+    //check rows
+    for (var i = 0; i < 9; i++)
+    {
+        var row = columnBoard[i];
+        row = row.sort();
+        for (var k = 0; k < 8; k++)
+        {
+            if (row[k+1] != row[k]+1)
+            {
+                console.log("failed boxes");
+                return false;
+            }
+                
+        }
+    }
+    
+    return true;
+}
+
+function copyThis(board)
+{
+    let tempBoard = [];
+    for (var i = 0; i < 9; i++)
+    {
+        var row = [];
+        for (var j = 0; j < 9; j++)
+        {
+            row.push(board[i][j]);
+            console.log(row);
+        }
+        tempBoard.push(row);
+    }
+    console.log("copy done");
+    console.log(tempBoard);
+    return tempBoard;
+}
+
+//function getKeyEntry(c, topState)
+function getKeyEntry(c)
 {
     let cellClicked = 2;
 
-    if( (( c >= 49 && c <= 57 ) || ( c >= 97 && c <= 105 ))
-            && topState === cellClicked)
+    //if( (( c >= 49 && c <= 57 ) || ( c >= 97 && c <= 105 ))
+    //        && topState === cellClicked)
+    if( (( c >= 49 && c <= 57 ) || ( c >= 97 && c <= 105 )) )
     {
+        console.log("coords");
         //console.log(coords[0]);
         //console.log(coords[1]);
         
@@ -34,6 +212,8 @@ function getKeyEntry(c, topState)
         if (c === 57 || c === 105) //9
             entry = 9;
     }
+    else if (c === 48 || c === 96)
+        entry = 0;
     else
         entry = -1;
     
@@ -157,12 +337,23 @@ function imageCoordinates(row, col)
 //accept coordinates of the canvas click
 //returns the cell of interest [0,0] to [8,8]
 //return [-1,y] or [x,-1] if neutral area click
-function cellSelected(x,y)
+function cellSelected(x,y,board)
 {
     //board is symmetric so decoding x and y is the same process
     let cellX = findCell(x);
     let cellY = findCell(y);
-    return [cellX, cellY]
+
+    //if the cell that was clicked is a puzzle given which is 
+    //registered as -1 val on the board
+    //return [-1,-1] anyway (treat as neutral)
+    if (board[cellY][cellX] === -1)
+        return [1,-1];
+    else
+        return [cellX, cellY]
+
+    //[x,y] is [col,row]
+    //but the board is accessed with 
+    //board[row][col]
 }
 
 function findCell(x)
@@ -191,13 +382,13 @@ function findCell(x)
         return 7;
     if ( x >= 3*d+8*c+6*b && x < 3*d+9*c+6*b)
         return 8;
-
+    
     //clicked on a neutral portion
     return -1;
 }
 
 export {drawGrid, getClickCoordinates, getClickType, cellSelected};
-export {imageCoordinates, getKeyEntry};
+export {imageCoordinates, getKeyEntry, checkWin};
 //change names of imageCoordinates and cellSelected
 //getImgCoords
 //getCell
