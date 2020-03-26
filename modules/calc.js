@@ -2,20 +2,82 @@ const thickPix = 5;
 const cellPix = 32;
 const thinPix = 2;
 
-function checkWin(board)
+const CLICKS = {
+    outsideCanvas: -2,
+    neutralRegion: -1,
+    cellRegion: 0
+};
+
+function copyThis(board)
 {
-    //FIX: case where we still have 0s in the board
+    let tempBoard = [];
+    for (var i = 0; i < 9; i++)
+    {
+        var row = [];
+        for (var j = 0; j < 9; j++)
+        {
+            row.push(board[i][j]);
+            console.log(row);
+        }
+        tempBoard.push(row);
+    }
+    console.log("copy done");
+    console.log(tempBoard);
+    return tempBoard;
+}
+
+function winnerHighlight(ctx,clickBoard,imageList)
+{
     for (var i = 0; i < 9; i++)
     {
         for (var j = 0; j < 9; j++)
         {
-            if (board[i][j] === 0)
+            var val = clickBoard[i][j];
+
+            if (val != -1)
+            {
+                var coords = imageCoordinates(i,j);
+                //highlight the cell
+                ctx.fillStyle = 'rgb(0, 128, 0)';
+                ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
+                //draw image
+                ctx.drawImage(imageList[val-1],coords[1],coords[0]);    
+    
+                //the thing is about the switched indices is:
+                //imageCoords(row,col) makes sense but
+                //drawImage (x,y) is actually column, row
+            }
+        }
+    }
+}
+
+function checkWin(clickBoard,valBoard)
+{
+    //check for empties in clickBoard
+    for (var i = 0; i < 9; i++)
+    {
+        for (var j = 0; j < 9; j++)
+        {
+            if (clickBoard[i][j] === 0)
             {
                     console.log("failed zero");
                     return false;
             }
         }
     }
+
+    //copy clickBoard data into valBoard then run checks
+    for (var i = 0; i < 9; i++)
+    {
+        for (var j = 0; j < 9; j++)
+        {
+            if (clickBoard[i][j] != -1)
+                valBoard[i][j] = clickBoard[i][j];
+        }
+    }
+
+    //re-using old name bindings
+    var board = valBoard;
 
     console.log("checking");
     var tempBoard = copyThis(board);
@@ -159,41 +221,33 @@ function checkWin(board)
     return true;
 }
 
-function copyThis(board)
+function getClickType(row,col,clickBoard)
 {
-    let tempBoard = [];
-    for (var i = 0; i < 9; i++)
-    {
-        var row = [];
-        for (var j = 0; j < 9; j++)
-        {
-            row.push(board[i][j]);
-            console.log(row);
-        }
-        tempBoard.push(row);
-    }
-    console.log("copy done");
-    console.log(tempBoard);
-    return tempBoard;
+    var currCell = [row,col];
+    var clickType;
+
+    //set clickType
+    if (currCell[0] >= 0 && currCell[1] >= 0)
+        if (clickBoard[currCell[0]][currCell[1]] === -1)
+            currCell = [-1,-1]
+
+    if (currCell[0] === -2)
+        clickType = CLICKS.outsideCanvas;
+    else if (currCell[0] === -1)
+        clickType = CLICKS.neutralRegion;
+    else   
+        clickType = CLICKS.cellRegion;
+
+    return clickType;
 }
 
-//function getKeyEntry(c, topState)
+
 function getKeyEntry(c)
 {
-    let cellClicked = 2;
-
-    //if( (( c >= 49 && c <= 57 ) || ( c >= 97 && c <= 105 ))
-    //        && topState === cellClicked)
+    var entry;
     if( (( c >= 49 && c <= 57 ) || ( c >= 97 && c <= 105 )) )
-    {
-        console.log("coords");
-        //console.log(coords[0]);
-        //console.log(coords[1]);
-        
-        //clever way: 
-        //tempImg = imageList[c-49]
-        var entry;
-        if (c === 49 || c === 97) //1, one code is for numpad
+    { 
+        if (c === 49 || c === 97) //1, alternate code is for numpad
             entry = 1;
         if (c === 50 || c === 98) //2
             entry = 2;
@@ -219,100 +273,63 @@ function getKeyEntry(c)
     
     return entry;
 }
-function getClickType(x,y)
+
+function activateCell(row,col,clickBoard,ctx,imageList)
 {
-    //clickType
-    /*
-    neutralClick = 3;
-    cellClick = 4;
-    outsideClick = 5;
-    canvasClick = 6;
-    */
+    var cell = [row,col];
+    console.log("activating");
+    //activate cell***
 
-    if (x === -1 || y === -1)
-        return 5; //outsideClick
-    else
-        return 6; //canvasClick
-
-    /*
-    This code was moved to prevent double function call
-    tempCell = cellSelected(x,y);
-    if (tempCell[0] === -1 || tempCell[1] === -1)
-        return 3; //neutralClick
-    else
-        return 4; //cellClick
-    */
-
-
-}
-//get click coordinates relative to canvas position (centered)
-//called inside the callback function for the click event
-function getClickCoordinates(window, canvas, event)
-{
-    const rect = canvas.getBoundingClientRect();
-    
-    //check if the click was not in the canvas
-    if (event.clientX < rect.left || event.clientX >= rect.right)
-        return [-1,-1];
-    else if (event.clientY < rect.top || event.clientY >= rect.bottom)
-        return [-1,-1];
-    //this click was in the canvas, get the canvas coordinates
+    //check if cell has contents
+    var val = clickBoard[row][col];
+    if (val != 0)
+    {
+        //yes: green, img
+        let coords = imageCoordinates(cell[0], cell[1]);
+        ctx.fillStyle = 'rgb(0, 128, 0)';
+        ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
+        ctx.drawImage(imageList[val-1], coords[1], coords[0]);
+    }
+            
     else
     {
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        return [x,y];
+        //no: green
+        let coords = imageCoordinates(cell[0], cell[1]);
+        ctx.fillStyle = 'rgb(0, 128, 0)';
+        ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
     }
 }
 
-function drawGrid(ctx)
+function deactivateCell(row,col,clickBoard,ctx,imageList)
 {
-    ctx.fillStyle = 'rgb(0, 0, 0)';
+    var cell = [row,col];
+    console.log("deactivating");
+    //deactivate cell***
 
-    //thick outer border
-    ctx.fillRect(0, 0, 320, thickPix); //top
-    ctx.fillRect(0, 320-thickPix, 320, thickPix); //bottom
-    ctx.fillRect(0, 0, thickPix, 320); //left
-    ctx.fillRect(320-thickPix,0,thickPix,320); //right
-
-    //simplify calculations for thick lines
-    let boxPix = 3*cellPix+2*thinPix;
-
-    //thick bars
-    ctx.fillRect(thickPix+boxPix, 0, thickPix, 320); //vertical left
-    ctx.fillRect(2*(thickPix+boxPix),0,thickPix,320); //vertical right
-    ctx.fillRect(0,thickPix+boxPix, 320, thickPix); //horizontal top
-    ctx.fillRect(0,2*(thickPix+boxPix),320,thickPix); //horizontal bottom
-
-    //thin bars
-    //verticals 1-6
-    ctx.fillRect(thickPix+cellPix, 0, thinPix, 320); 
-    ctx.fillRect(thickPix+2*cellPix+thinPix, 0, thinPix, 320); 
-    
-    ctx.fillRect(2*thickPix+4*cellPix+2*thinPix, 0, thinPix, 320); 
-    ctx.fillRect(2*thickPix+5*cellPix+3*thinPix, 0, thinPix, 320); 
-    
-    ctx.fillRect(3*thickPix+7*cellPix+4*thinPix, 0, thinPix, 320); 
-    ctx.fillRect(3*thickPix+8*cellPix+5*thinPix, 0, thinPix, 320); 
-
-    //horizontals 1-6
-    ctx.fillRect(0,thickPix+cellPix, 320, thinPix); 
-    ctx.fillRect(0,thickPix+2*cellPix+thinPix, 320, thinPix); 
-    
-    ctx.fillRect(0,2*thickPix+4*cellPix+2*thinPix, 320, thinPix); 
-    ctx.fillRect(0,2*thickPix+5*cellPix+3*thinPix, 320, thinPix); 
-    
-    ctx.fillRect(0,3*thickPix+7*cellPix+4*thinPix, 320, thinPix); 
-    ctx.fillRect(0,3*thickPix+8*cellPix+5*thinPix, 320, thinPix); 
+    //check if cell has contents
+    var val = clickBoard[row][col];
+    if (val != 0)
+    {
+        //yes: white, img
+        let coords = imageCoordinates(cell[0], cell[1]);
+        ctx.fillStyle = 'rgb(255, 255, 255)';
+        ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
+        ctx.drawImage(imageList[val-1], coords[1], coords[0]);
+    }
+            
+    else
+    {
+        //no: white
+        let coords = imageCoordinates(cell[0], cell[1]);
+        ctx.fillStyle = 'rgb(255, 255, 255)';
+        ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
+    }
 }
 
-//accept the cell of interest [0,0] to [8,8]
-//returns the pixel position to output the image
-//e.g. the top left pixel position of the cell
 function imageCoordinates(row, col)
 {
     if (row === -1 || col === -1)
-        return [-1,-1]
+        return [-1, -1];
 
     let d = thickPix;
     let c = cellPix;
@@ -331,32 +348,45 @@ function imageCoordinates(row, col)
                       3*d+8*c+6*b
                     ];
     
+    //returning (y,x) pixel coordinates
     return [ pixelList[row], pixelList[col] ];
 }
 
-//accept coordinates of the canvas click
-//returns the cell of interest [0,0] to [8,8]
-//return [-1,y] or [x,-1] if neutral area click
-function cellSelected(x,y,board)
+function getClickCoordinates(window, canvas, event)
 {
-    //board is symmetric so decoding x and y is the same process
-    let cellX = findCell(x);
-    let cellY = findCell(y);
-
-    //if the cell that was clicked is a puzzle given which is 
-    //registered as -1 val on the board
-    //return [-1,-1] anyway (treat as neutral)
-    if (board[cellY][cellX] === -1)
-        return [1,-1];
-    else
-        return [cellX, cellY]
-
-    //[x,y] is [col,row]
-    //but the board is accessed with 
-    //board[row][col]
+    const rect = canvas.getBoundingClientRect();
+    
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    return [x,y];
 }
 
-function findCell(x)
+function getCell(x,y,canvas)
+{
+    const rect = canvas.getBoundingClientRect();
+    let width = rect.right - rect.left;
+    let height = rect.bottom - rect.top;
+
+    //out-of-canvas 
+    if (x < 0 || y < 0 || x >= width || y >= height)
+        return [-2,-2]; 
+    
+    //in-canvas
+    else
+    {
+        var cellRow = getCellFromDistance(y);
+        var cellColumn = getCellFromDistance(x);
+    }
+
+    //neutral-zone
+    if (cellRow === -1 || cellColumn === -1)
+        return [-1,-1];
+    //active-cell
+    else
+        return [cellRow,cellColumn];
+}
+
+function getCellFromDistance(x)
 {
     let d = thickPix;
     let c = cellPix;
@@ -387,8 +417,5 @@ function findCell(x)
     return -1;
 }
 
-export {drawGrid, getClickCoordinates, getClickType, cellSelected};
-export {imageCoordinates, getKeyEntry, checkWin};
-//change names of imageCoordinates and cellSelected
-//getImgCoords
-//getCell
+export {imageCoordinates, getClickCoordinates, getCell, winnerHighlight};
+export {activateCell, deactivateCell, getKeyEntry, getClickType, checkWin};
