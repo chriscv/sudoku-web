@@ -4,17 +4,54 @@
     <head>
         <title>sudoku</title>
         <style>
-            #board {
-                padding: 0;
-                margin: auto;
-                display: block;
+            #wrapper {
+                margin: 0 auto;
                 width: 320px;
+                position: relative;
             }
+
+            #board-off {
+                margin: 0 auto;
+                width: 320px;
+                position: relative;
+            }
+            
+            #btn-group {
+                margin-top:3px;
+                width: 320px;
+                display: flex;
+                justify-content: center;
+            }
+            
+            #resetButton {
+                position: absolute;
+                left: 0;
+            }
+            
+            #newPuzzleButton {
+                position: absolute;
+                right: 0;
+            }
+
+            .btn-Off {
+                margin-left:5px;
+                margin-right:5px;
+            }
+
         </style>
         <script type="module" src="sudoku.js"></script>
     </head>
     <body>
-        <canvas id="board" width="320" height="320"></canvas>
+        <div id="wrapper">
+            <canvas id="board" width="320" height="320"></canvas>
+            <!--<div>-->
+            <div id="btn-group">
+                <button id="resetButton" class="btn" id="resetButton">Reset</button>
+                <button id="newPuzzleButton" class="btn" id="newPuzzleButton">New Puzzle</button>
+            </div>
+            <!--</div>-->
+        </div>
+        
     </body>    
 </html>
 

@@ -8,6 +8,28 @@ const CLICKS = {
     cellRegion: 0
 };
 
+class GameObject {
+    constructor(ctx, clickBoard, imageList) {
+      this.ctx = ctx;
+      this.clickBoard = clickBoard;
+      this.imageList = imageList;
+    }
+}
+
+class CellObj {
+    constructor(cellRow, cellCol, ctx, clickBoard, imageList) {
+        this.cellRow = cellRow;
+        this.cellCol = cellCol;
+        this.ctx = ctx;
+        this.clickBoard = clickBoard;
+        this.imageList = imageList;
+    }
+
+    activate() {
+        activateCell(cellRow,cellCol,ctx,clickBoard,imageList);
+    }
+}
+
 function copyThis(board)
 {
     let tempBoard = [];
@@ -274,7 +296,31 @@ function getKeyEntry(c)
     return entry;
 }
 
-function activateCell(row,col,clickBoard,ctx,imageList)
+function activateCell(row,col,gameObj)
+{
+    var clickBoard = gameObj.clickBoard;
+    var ctx = gameObj.ctx;
+    var imageList = gameObj.imageList;
+    
+    console.log("inside activateCell2");
+    console.log(clickBoard);
+    
+    activateCell2(row,col,clickBoard,ctx,imageList);
+}
+
+function deactivateCell(row,col,gameObj)
+{
+    var clickBoard = gameObj.clickBoard;
+    var ctx = gameObj.ctx;
+    var imageList = gameObj.imageList;
+    
+    console.log("inside activateCell2");
+    console.log(clickBoard);
+    
+    deactivateCell2(row,col,clickBoard,ctx,imageList);
+}
+
+function activateCell2(row,col,clickBoard,ctx,imageList)
 {
     var cell = [row,col];
     console.log("activating");
@@ -300,7 +346,7 @@ function activateCell(row,col,clickBoard,ctx,imageList)
     }
 }
 
-function deactivateCell(row,col,clickBoard,ctx,imageList)
+function deactivateCell2(row,col,clickBoard,ctx,imageList)
 {
     var cell = [row,col];
     console.log("deactivating");
@@ -419,3 +465,4 @@ function getCellFromDistance(x)
 
 export {imageCoordinates, getClickCoordinates, getCell, winnerHighlight};
 export {activateCell, deactivateCell, getKeyEntry, getClickType, checkWin};
+export {activateCell2,GameObject, deactivateCell2};
