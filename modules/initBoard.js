@@ -96,9 +96,11 @@ function createBoard(ctx, imageList)
                 //which is essentially (y,x)
                 //but the canvas drawImage functions accepts (x,y)
                 //therefore we reverse the arguments in the call to drawImage
-                ctx.fillStyle = 'rgb(200, 200, 200)';
-                ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
-                ctx.drawImage(imageList[val-1], coords[1], coords[0])
+                //ctx.fillStyle = 'rgb(200, 200, 200)';
+                //ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
+                Calc.fillCell(i,j,"grey",ctx);
+                //ctx.drawImage(imageList[val-1], coords[1], coords[0])
+                Calc.drawToCell(imageList[val-1],i,j,ctx);
 
                 tempBoard[i][j] = -1; //neutral (given)
             }

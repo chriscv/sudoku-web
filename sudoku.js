@@ -1,6 +1,7 @@
 import * as InitBoard from './modules/initBoard.js'
 import * as Calc from './modules/calc.js'
-import * as Boards from './modules/Boards.js'
+import * as Boards from './modules/boards.js'
+import * as Win from './modules/checkWin.js'
 
 const thickPix = 5;
 const cellPix = 32;
@@ -25,23 +26,44 @@ document.addEventListener("DOMContentLoaded", () => {
     
     //load images then start
     var imageCounter = 0;
+    var smallImageCounter = 0;
+    
     let numImages = 9;
+    var numSmallImages = 9;
+
     var imageList = [];
+    var smallImageList = [];
     for (let count = 1; count <= numImages; count++)
     {
         let tempImg = document.createElement("img");
         tempImg.src = "./images/" + count.toString() + ".png";
 
         tempImg.addEventListener('load', function () {
-            imageList[count-1] = this; //strange JS indexing, into empty array
+            imageList[count-1] = this; //indexing into empty array works
             imageCounter++;
-            if(imageCounter === numImages)
+            if(imageCounter === numImages && smallImageCounter === numSmallImages)
+            {
               startGame(canvas, ctx, imageList);
+            }
         });
     }   
+    for (let count = 1; count <= numImages; count++)
+    {
+        let tempImg = document.createElement("img");
+        tempImg.src = "./images/" + "small" + count.toString() + "n.png";
+        
+        tempImg.addEventListener('load', function () {
+            smallImageList[count-1] = this; //indexing into empty array works
+            smallImageCounter++;
+            if(imageCounter === numImages && smallImageCounter === numSmallImages)
+            {
+                startGame(canvas, ctx, imageList, smallImageList);
+            }
+        });
+    }
 });
 
-function startGame(canvas, ctx, imageList)
+function startGame(canvas, ctx, imageList, smallImageList)
 {
     //draw board grid
     InitBoard.drawGrid(ctx);
@@ -62,6 +84,18 @@ function startGame(canvas, ctx, imageList)
     //rendering resources, use object to shorten function calls
     var gameObj = new Calc.GameObject(ctx,clickBoard,imageList);
 
+    //FIX: TESTING SMALL IMAGES 
+    ctx.drawImage(smallImageList[1],7+2*thinPix+2*cellPix,7);
+    ctx.drawImage(smallImageList[4],7+2*thinPix+2*cellPix+9,7);
+    ctx.drawImage(smallImageList[3],7+2*thinPix+2*cellPix+18,7);
+
+    ctx.drawImage(smallImageList[5],7+2*thinPix+2*cellPix,7+9);
+    ctx.drawImage(smallImageList[7],7+2*thinPix+2*cellPix+9,7+9);
+    ctx.drawImage(smallImageList[8],7+2*thinPix+2*cellPix+18,7+9);
+    
+    ctx.drawImage(smallImageList[0],7+2*thinPix+2*cellPix,7+18);
+    ctx.drawImage(smallImageList[2],7+2*thinPix+2*cellPix+9,7+18);
+    ctx.drawImage(smallImageList[6],7+2*thinPix+2*cellPix+18,7+18);    
 
     //MOUSE CLICK HANDLER
     window.addEventListener('click', function(event) {
@@ -162,7 +196,7 @@ function startGame(canvas, ctx, imageList)
                     topState = STATES.waiting;
                     
                     //check for win
-                    let win = Calc.checkWin(clickBoard,valBoard);
+                    let win = Win.checkWin(clickBoard,valBoard);
                     if(win)
                     {                    
                         topState = 99; //stop the state machine
@@ -178,7 +212,12 @@ function startGame(canvas, ctx, imageList)
     var resetButton = document.querySelector("#resetButton");
     resetButton.addEventListener("click", function () {
     
-        clickBoard = Boards.resetBoard(ctx,imageList,clickBoard);
+        if (topState = STATES.activeCell)
+        {
+            Calc.deactivateCell(activeCell[0], activeCell[1], gameObj);
+        }
+
+        clickBoard = Boards.resetBoard(gameObj);
         
         topState = STATES.waiting;
     });

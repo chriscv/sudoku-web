@@ -30,22 +30,30 @@ class CellObj {
     }
 }
 
-function copyThis(board)
+function fillCell(row,col,color,ctx)
 {
-    let tempBoard = [];
-    for (var i = 0; i < 9; i++)
+    if (color === "white")
     {
-        var row = [];
-        for (var j = 0; j < 9; j++)
-        {
-            row.push(board[i][j]);
-            console.log(row);
-        }
-        tempBoard.push(row);
+        ctx.fillStyle = 'rgb(255, 255, 255)';
     }
-    console.log("copy done");
-    console.log(tempBoard);
-    return tempBoard;
+    else if (color === "green")
+    {
+        ctx.fillStyle = 'rgb(0, 128, 0)';
+    }
+    else if (color === "grey")
+    {
+        ctx.fillStyle = 'rgb(200, 200, 200)';
+    }
+
+    //FIX: this to return (x,y instead of (y,x) then call fillRect 0,1
+    var coords = imageCoordinates(row,col);
+    ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
+}
+
+function drawToCell(image,row,col,ctx)
+{
+    var coords = imageCoordinates(row,col);
+    ctx.drawImage(image,coords[0],coords[1]);    
 }
 
 function winnerHighlight(ctx,clickBoard,imageList)
@@ -58,190 +66,14 @@ function winnerHighlight(ctx,clickBoard,imageList)
 
             if (val != -1)
             {
-                var coords = imageCoordinates(i,j);
-                //highlight the cell
-                ctx.fillStyle = 'rgb(0, 128, 0)';
-                ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
-                //draw image
-                ctx.drawImage(imageList[val-1],coords[1],coords[0]);    
-    
-                //the thing is about the switched indices is:
-                //imageCoords(row,col) makes sense but
-                //drawImage (x,y) is actually column, row
+                fillCell(i,j,"green",ctx);
+                drawToCell(imageList[val-1],i,j,ctx);
             }
         }
     }
 }
 
-function checkWin(clickBoard,valBoard)
-{
-    //check for empties in clickBoard
-    for (var i = 0; i < 9; i++)
-    {
-        for (var j = 0; j < 9; j++)
-        {
-            if (clickBoard[i][j] === 0)
-            {
-                    console.log("failed zero");
-                    return false;
-            }
-        }
-    }
 
-    //copy clickBoard data into valBoard then run checks
-    for (var i = 0; i < 9; i++)
-    {
-        for (var j = 0; j < 9; j++)
-        {
-            if (clickBoard[i][j] != -1)
-                valBoard[i][j] = clickBoard[i][j];
-        }
-    }
-
-    //re-using old name bindings
-    var board = valBoard;
-
-    console.log("checking");
-    var tempBoard = copyThis(board);
-    console.log(tempBoard);
-    //check rows***
-    for (var i = 0; i < 9; i++)
-    {
-        var row = tempBoard[i];
-        row = row.sort();
-        for (var k = 0; k < 8; k++)
-        {
-            if (row[k+1] != row[k]+1)
-            {
-                    console.log("failed rows");
-                    return false;
-            }
-        }
-    }
-    
-    //check columns***
-    //build up columns into rows, then re-use the code
-    var columnBoard = [];
-    var tempBoard = copyThis(board);
-    for (var i = 0; i < 9; i++)
-    {
-        var column = [];
-
-        for (var j = 0; j < 9; j++)
-        {
-            column.push(tempBoard[j][i]);    
-        }
-        console.log(column);
-        columnBoard.push(column);
-    }
-    console.log(column.board);
-    //re-use row tester on columnBoard
-    //check rows
-    for (var i = 0; i < 9; i++)
-    {
-        var row = columnBoard[i];
-        row = row.sort();
-        for (var k = 0; k < 8; k++)
-        {
-            if (row[k+1] != row[k]+1)
-            {
-                console.log("failed columns");
-                return false;
-            }
-                
-        }
-    }
-
-    //box checker***
-    //build up boxes into rows, then re-use the code
-    //box1, i [0,2] j [0,2]
-    //box2, i [0,2] j [3,5]
-    //box3, i [0,2] j [6,8]
-    
-    //box4, i [3,5] j [0,2]
-    //box5, i [3,5] j [3,5]
-    //box6, i [3,5] j [6,8]
-    
-    //box7, i [6,8] j [6,8]
-    //box8, i [6,8] j [3,5]
-    //box9, i [6,8] j [0,2]
-    let box1 = [];
-    let box2 = [];
-    let box3 = [];
-    let box4 = [];
-    let box5 = [];
-    let box6 = [];
-    let box7 = [];
-    let box8 = [];
-    let box9 = [];
-    var tempBoard = copyThis(board);
-    for (var i = 0; i < 9; i++) //i is the row depth
-    {
-        for (var j = 0; j < 9; j++) //j is the column depth
-        {
-            var val = tempBoard[i][j];
-
-            if (i < 2)
-            {
-                if (j < 3) //box1
-                    box1.push(val);
-                else if (j < 6)
-                    box2.push(val);
-                else
-                    box3.push(val);
-            }
-            else if (i < 6)
-            {
-                if (j < 3)
-                    box4.push(val);
-                else if (j < 6)
-                    box5.push(val);
-                else
-                    box6.push(val);
-            }
-            else
-            {
-                if (j < 3)
-                    box7.push(val);
-                else if (j < 6)
-                    box8.push(val);
-                else
-                    box9.push(val);
-            }
-            
-        }
-    }
-    let boxBoard = [ 
-                     box1,
-                     box2,
-                     box3,
-                     box4,
-                     box5,
-                     box6,
-                     box7,
-                     box8,
-                     box9
-                   ];
-    console.log(boxBoard);
-    //re-use row tester on boxBoard
-    //check rows
-    for (var i = 0; i < 9; i++)
-    {
-        var row = columnBoard[i];
-        row = row.sort();
-        for (var k = 0; k < 8; k++)
-        {
-            if (row[k+1] != row[k]+1)
-            {
-                console.log("failed boxes");
-                return false;
-            }
-                
-        }
-    }
-    
-    return true;
-}
 
 function getClickType(row,col,clickBoard)
 {
@@ -331,18 +163,14 @@ function activateCell2(row,col,clickBoard,ctx,imageList)
     if (val != 0)
     {
         //yes: green, img
-        let coords = imageCoordinates(cell[0], cell[1]);
-        ctx.fillStyle = 'rgb(0, 128, 0)';
-        ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
-        ctx.drawImage(imageList[val-1], coords[1], coords[0]);
+        fillCell(row,col,"green",ctx);
+        drawToCell(imageList[val-1],row,col,ctx);
     }
             
     else
     {
         //no: green
-        let coords = imageCoordinates(cell[0], cell[1]);
-        ctx.fillStyle = 'rgb(0, 128, 0)';
-        ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
+        fillCell(row,col,"green",ctx);
     }
 }
 
@@ -356,24 +184,22 @@ function deactivateCell2(row,col,clickBoard,ctx,imageList)
     var val = clickBoard[row][col];
     if (val != 0)
     {
-        //yes: white, img
-        let coords = imageCoordinates(cell[0], cell[1]);
-        ctx.fillStyle = 'rgb(255, 255, 255)';
-        ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
-        ctx.drawImage(imageList[val-1], coords[1], coords[0]);
+        //yes: white, img 
+        fillCell(row,col,"white",ctx);
+        drawToCell(imageList[val-1],row,col,ctx);
     }
             
     else
     {
         //no: white
-        let coords = imageCoordinates(cell[0], cell[1]);
-        ctx.fillStyle = 'rgb(255, 255, 255)';
-        ctx.fillRect(coords[1],coords[0],cellPix,cellPix);
+        fillCell(row,col,"white",ctx);
     }
 }
 
 function imageCoordinates(row, col)
 {
+    console.log(row);
+    console.log(col);
     if (row === -1 || col === -1)
         return [-1, -1];
 
@@ -394,8 +220,8 @@ function imageCoordinates(row, col)
                       3*d+8*c+6*b
                     ];
     
-    //returning (y,x) pixel coordinates
-    return [ pixelList[row], pixelList[col] ];
+    //returning (x,y) pixel coordinates -- origin is top left
+    return [ pixelList[col], pixelList[row] ];
 }
 
 function getClickCoordinates(window, canvas, event)
@@ -464,5 +290,5 @@ function getCellFromDistance(x)
 }
 
 export {imageCoordinates, getClickCoordinates, getCell, winnerHighlight};
-export {activateCell, deactivateCell, getKeyEntry, getClickType, checkWin};
-export {activateCell2,GameObject, deactivateCell2};
+export {activateCell, deactivateCell, getKeyEntry, getClickType};
+export {activateCell2,GameObject, deactivateCell2, fillCell, drawToCell};
