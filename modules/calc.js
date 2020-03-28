@@ -45,7 +45,6 @@ function fillCell(row,col,color,ctx)
         ctx.fillStyle = 'rgb(200, 200, 200)';
     }
 
-    //FIX: this to return (x,y instead of (y,x) then call fillRect 0,1
     var coords = imageCoordinates(row,col);
     ctx.fillRect(coords[0],coords[1],cellPix,cellPix);
 }
