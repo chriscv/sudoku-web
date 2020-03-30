@@ -263,6 +263,17 @@ function getCellFromDistance(x)
     let c = cellPix;
     let b = thinPix;
 
+    //if (aVeryLongExpression === anotherVeryLongExpressionSuperLongExpression);
+        //code
+
+    //switch (aVeryLongExpression)
+        //case (equality with anotherVeryLongExpressionSuperLongExpression):
+            //code
+            //break;
+        //case (another very long expression):
+            //code
+            //break;
+        //...
     if ( x >= d           && x < d+c       )
         return 0;
     if ( x >= d+c+b       && x < d+2*c+b   )

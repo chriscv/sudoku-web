@@ -2,24 +2,29 @@ import * as InitBoard from './modules/initBoard.js'
 import * as Calc from './modules/calc.js'
 import * as Boards from './modules/boards.js'
 import * as Win from './modules/checkWin.js'
+import {STATES} from './modules/enums.js'
+import * as Keyboard from './modules/keyboard.js'
 
 const thickPix = 5;
 const cellPix = 32;
 const thinPix = 2;
 
+//game enums
 const CLICKS = {
     outsideCanvas: -2,
     neutralRegion: -1,
     cellRegion: 0
 };
 
+/*
 const STATES = {
     waiting: 0,
     activeCell: 1
 };
+*/
 
 document.addEventListener("DOMContentLoaded", () => {
-    
+
     //create canvas context
     var canvas = document.getElementById('board');
     var ctx = canvas.getContext('2d');
@@ -38,6 +43,11 @@ document.addEventListener("DOMContentLoaded", () => {
         let tempImg = document.createElement("img");
         tempImg.src = "./images/" + count.toString() + ".png";
 
+        //update this code to be less confusing, lucky with the let binding
+        //pass the count into the callback function
+        //alternatively push the handlers into a handlerList
+        //afterwards call all the handlerList callbacks
+        //see irc ##javascript question
         tempImg.addEventListener('load', function () {
             imageList[count-1] = this; //indexing into empty array works
             imageCounter++;
@@ -47,7 +57,11 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }   
-    for (let count = 1; count <= numImages; count++)
+    //remove small image code, include in docs for future development concept 
+    //also put implementation of puzzle bank for future development concept
+    //strategy 1: implement a solver and pull consistent difficulty ratings
+    //strategy 2: pull puzzle bank from online source of constant ratings
+    for (let count = 1; count <= numSmallImages; count++)
     {
         let tempImg = document.createElement("img");
         tempImg.src = "./images/" + "small" + count.toString() + "n.png";
@@ -85,6 +99,7 @@ function startGame(canvas, ctx, imageList, smallImageList)
     var gameObj = new Calc.GameObject(ctx,clickBoard,imageList);
 
     //FIX: TESTING SMALL IMAGES 
+    //TO REMOVE
     ctx.drawImage(smallImageList[1],7+2*thinPix+2*cellPix,7);
     ctx.drawImage(smallImageList[4],7+2*thinPix+2*cellPix+9,7);
     ctx.drawImage(smallImageList[3],7+2*thinPix+2*cellPix+18,7);
@@ -98,6 +113,7 @@ function startGame(canvas, ctx, imageList, smallImageList)
     ctx.drawImage(smallImageList[6],7+2*thinPix+2*cellPix+18,7+18);    
 
     //MOUSE CLICK HANDLER
+    //FIX: Move handler function to mouse.js
     window.addEventListener('click', function(event) {
 
         //get raw input
@@ -164,54 +180,18 @@ function startGame(canvas, ctx, imageList, smallImageList)
 
 
     //KEYBOARD PRESS HANDLER
-    document.addEventListener('keydown', function(event) {
-        
-        //get raw input
-        let c = event.keyCode;
-
-        if (topState == STATES.activeCell)
-        {
-            //filter input -- convert keycode to digit
-            var entry = Calc.getKeyEntry(c);
-            
-            //check for valid input -- a digit
-            if (entry != -1)
-            {
-                //deletion with 0
-                if (entry === 0)
-                {
-                    clickBoard[activeCell[0]][activeCell[1]] = entry;
-                    
-                    Calc.deactivateCell(activeCell[0],activeCell[1],gameObj);
-
-                    topState = STATES.waiting;
-                }
-                //data entry with 1 to 9
-                else
-                {
-                    clickBoard[activeCell[0]][activeCell[1]] = entry; 
-                    
-                    Calc.deactivateCell(activeCell[0],activeCell[1],gameObj);
-                    
-                    topState = STATES.waiting;
-                    
-                    //check for win
-                    let win = Win.checkWin(clickBoard,valBoard);
-                    if(win)
-                    {                    
-                        topState = 99; //stop the state machine
-                        Calc.winnerHighlight(ctx,clickBoard,imageList);
-                    }
-                }
-            }
-        }
-        
+    //FIX: capture more variables into the game object
+    document.addEventListener('keydown', function() {
+        topState = Keyboard.handleKeyPress(event, topState, gameObj, activeCell,valBoard);
     });
 
     //reset button
+    //FIX: move handler to boards.js
     var resetButton = document.querySelector("#resetButton");
     resetButton.addEventListener("click", function () {
     
+      //confirmation dialog:
+      //if (confirm):
         if (topState = STATES.activeCell)
         {
             Calc.deactivateCell(activeCell[0], activeCell[1], gameObj);
@@ -223,6 +203,7 @@ function startGame(canvas, ctx, imageList, smallImageList)
     });
 
     //new puzzle button
+    //FIX: move handler to puzzle.js
     var newPuzzleButton = document.querySelector("#newPuzzleButton");
     newPuzzleButton.addEventListener("click", function () {
         

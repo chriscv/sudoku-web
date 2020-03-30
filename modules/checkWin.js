@@ -186,4 +186,23 @@ function copyThis(board)
     return tempBoard;
 }
 
+function testRowsForUniqueEntries(board)
+{
+    var tempBoard = board;
+    //check rows***
+    for (var i = 0; i < 9; i++)
+    {
+        var row = tempBoard[i];
+        row = row.sort();
+        for (var k = 0; k < 8; k++)
+        {
+            if (row[k+1] != row[k]+1)
+            {
+                    console.log("failed rows");
+                    return false;
+            }
+        }
+    }
+}
+
 export {checkWin};
