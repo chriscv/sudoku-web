@@ -2,11 +2,13 @@ import {STATES} from './enums.js'
 import * as Calc from './calc.js'
 import * as Win from './checkWin.js'
 
-function handleKeyPress(event, topState, gameObj, activeCell, valBoard)
+function handleKeyPress(event, topState, gameObj)
 {        
     var ctx = gameObj.ctx;
     var imageList = gameObj.imageList;
     var clickBoard = gameObj.clickBoard;
+    var activeCell = gameObj.activeCell;
+    var valBoard = gameObj.valBoard;
 
     //get raw input
     let c = event.keyCode;

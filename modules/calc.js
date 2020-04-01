@@ -9,10 +9,12 @@ const CLICKS = {
 };
 
 class GameObject {
-    constructor(ctx, clickBoard, imageList) {
+    constructor(ctx, clickBoard, imageList, activeCell, valBoard) {
       this.ctx = ctx;
       this.clickBoard = clickBoard;
       this.imageList = imageList;
+      this.activeCell = activeCell;
+      this.valBoard = valBoard;
     }
 }
 
