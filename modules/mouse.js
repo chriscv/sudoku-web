@@ -9,11 +9,8 @@ const CLICKS = {
 
 function handleMouseClick(event, topState, gameObj, canvas)
 {
-        var ctx = gameObj.ctx;
-        var imageList = gameObj.imageList;
         var clickBoard = gameObj.clickBoard;
         var activeCell = gameObj.activeCell;
-        var valBoard = gameObj.valBoard;
 
          //get raw input
         let clickCoords = Calc.getClickCoordinates(window, canvas, event);

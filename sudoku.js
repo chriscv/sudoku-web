@@ -1,6 +1,9 @@
 import * as InitBoard from './modules/initBoard.js'
-import * as Calc from './modules/calc.js'
 import * as Boards from './modules/boards.js'
+
+import * as Calc from './modules/calc.js'
+//create a render file?
+
 import * as Keyboard from './modules/keyboard.js'
 import * as Mouse from './modules/mouse.js'
 import {STATES} from './modules/enums.js'
@@ -15,30 +18,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     var imageList = [];
 
-    //can we remove this code and simply use window.onload? 
-    //which fires after all scripts, images, css have loaded?
+    //load images then start
     for (let count = 1; count <= numImages; count++)
     {
         let tempImg = document.createElement("img");
         tempImg.src = "./images/" + count.toString() + ".png";
 
-        //update this code to be less confusing, lucky with the let binding
-        //pass the count into the callback function
-        //alternatively push the handlers into a handlerList
-        //afterwards call all the handlerList callbacks
-        //see irc ##javascript question
         tempImg.addEventListener('load', function () {
             imageList[count-1] = this; //indexing into empty array works
             imageCounter++;
             if(imageCounter === numImages)
             {
-              startGame(canvas, ctx, imageList);
+                startGame(canvas, ctx, imageList);
             }
         });
     }  
 });
 
-function startGame(canvas, ctx, imageList, smallImageList)
+function startGame(canvas, ctx, imageList)
 {
     //draw board grid
     InitBoard.drawGrid(ctx);
@@ -48,43 +45,40 @@ function startGame(canvas, ctx, imageList, smallImageList)
     var clickBoard = boards[0];
     var valBoard = boards[1];
 
-    //state machine variables
-    var topState = STATES.waiting;
-
     //cell memory
     var activeCell = [null,null];
 
-    //rendering resources, use object to shorten function calls
+    //game variables container
     var gameObj = new Calc.GameObject(ctx,
                                       clickBoard,
                                       imageList,
                                       activeCell,
                                       valBoard);  
 
-    //MOUSE CLICK HANDLER
-    //FIX: Move handler function to mouse.js
+    //state machine variables
+    var topState = STATES.waiting;
+
+    //mouse click handler
     window.addEventListener('click', function(event) {
 
+        //highlights or de-highlights cell
         topState = Mouse.handleMouseClick(event, topState, gameObj, canvas);
 
     });
 
 
-    //KEYBOARD PRESS HANDLER
-    //FIX: capture more variables into the game object
+    //key press handler
     document.addEventListener('keydown', function(event) {
 
+        //enters data into or deletes data from cell
         topState = Keyboard.handleKeyPress(event, topState, gameObj);
 
     });
 
-    //"Reset" button
-    //FIX: move handler to boards.js
+    //"Reset" button -- FIX: move handler to boards.js
     var resetButton = document.querySelector("#resetButton");
     resetButton.addEventListener("click", function () {
     
-      //confirmation dialog:
-      //if (confirm):
         if (topState = STATES.activeCell)
         {
             Calc.deactivateCell(activeCell[0], activeCell[1], gameObj);
@@ -95,8 +89,7 @@ function startGame(canvas, ctx, imageList, smallImageList)
         topState = STATES.waiting;
     });
 
-    //"New Puzzle" button
-    //FIX: move handler to puzzle.js
+    //"New Puzzle" button -- FIX: move handler to puzzle.js
     var newPuzzleButton = document.querySelector("#newPuzzleButton");
     newPuzzleButton.addEventListener("click", function () {
         
